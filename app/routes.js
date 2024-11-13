@@ -29,19 +29,22 @@ module.exports = function(app, passport, db) {
 
 // message board routes ===============================================================
 
-    app.post('/messages', (req, res) => {
-      db.collection('christmasList').save({itemName: req.body.itemName, itemLink: req.body.itemLink}, (err, result) => {
-        if (err) return console.log(err)
-        console.log('saved to database')
-        res.redirect('/profile')
-      })
+    app.post('/christmasListItem', (req, res) => {
+      //make sure the user typed in an item, and also insure that the link is an absolute path
+      if(req.body.itemName && req.body.itemLink.includes("http")) {
+        db.collection('christmasList').save({itemName: req.body.itemName, itemLink: req.body.itemLink, purchased: false}, (err, result) => {
+          if (err) return console.log(err)
+          console.log('saved to database')
+          res.redirect('/profile')
+        })
+      }
     })
 
-    app.put('/messagesUp', (req, res) => {
+    app.put('/markPurchased', (req, res) => {
       db.collection('christmasList')
-      .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+      .findOneAndUpdate({itemName: req.body.itemName, itemLink: req.body.itemLink}, {
         $set: {
-          thumbUp:req.body.thumbUp + 1
+          purchased: true
         }
       }, {
         sort: {_id: -1},
@@ -52,11 +55,11 @@ module.exports = function(app, passport, db) {
       })
     })
 
-    app.put('/messagesDown', (req, res) => {
+    app.put('/markUnpurchased', (req, res) => {
       db.collection('christmasList')
-      .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+      .findOneAndUpdate({itemName: req.body.itemName, itemLink: req.body.itemLink}, {
         $set: {
-          thumbUp:req.body.thumbUp - 1
+          purchased: false
         }
       }, {
         sort: {_id: -1},
@@ -67,8 +70,8 @@ module.exports = function(app, passport, db) {
       })
     })
 
-    app.delete('/messages', (req, res) => {
-      db.collection('christmasList').findOneAndDelete({name: req.body.name, msg: req.body.msg}, (err, result) => {
+    app.delete('/christmasListItem', (req, res) => {
+      db.collection('christmasList').findOneAndDelete({itemName: req.body.itemName, itemLink: req.body.itemLink}, (err, result) => {
         if (err) return res.send(500, err)
         res.send('Message deleted!')
       })
