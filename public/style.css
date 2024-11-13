@@ -1,7 +1,21 @@
 body{
+  background: rgb(2,0,36);
+  background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(0,232,255,1) 100%);
   padding-top:80px;
   word-wrap:break-word;
 }
 img{
   height: 200px;
+}
+
+.jumbotron-fluid {
+  background-color: #33EDFF;
+}
+
+.links {
+  color: rgb(2,0,36);
+}
+
+.links:hover {
+  color: rgb(39, 29, 236);
 }
