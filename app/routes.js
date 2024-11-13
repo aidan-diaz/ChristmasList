@@ -9,7 +9,7 @@ module.exports = function(app, passport, db) {
 
     // PROFILE SECTION =========================
     app.get('/profile', isLoggedIn, function(req, res) {
-        db.collection('christmasList').find().toArray((err, result) => {
+        db.collection('christmasList').find({user: req.user}).toArray((err, result) => {
           if (err) return console.log(err)
           res.render('profile.ejs', {
             user : req.user,
@@ -27,16 +27,19 @@ module.exports = function(app, passport, db) {
         res.redirect('/');
     });
 
-// message board routes ===============================================================
+// Christmas List Item routes ===============================================================
 
     app.post('/christmasListItem', (req, res) => {
       //make sure the user typed in an item, and also insure that the link is an absolute path
       if(req.body.itemName && req.body.itemLink.includes("http")) {
-        db.collection('christmasList').save({itemName: req.body.itemName, itemLink: req.body.itemLink, purchased: false}, (err, result) => {
+        db.collection('christmasList').save({user: req.user, itemName: req.body.itemName, itemLink: req.body.itemLink, purchased: false}, (err, result) => {
           if (err) return console.log(err)
           console.log('saved to database')
           res.redirect('/profile')
         })
+      }else {
+        res.redirect('/profile')
+        //try to flash an error message too
       }
     })
 
