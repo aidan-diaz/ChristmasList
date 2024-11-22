@@ -7,16 +7,23 @@ module.exports = function(app, passport, db) {
         res.render('index.ejs');
     });
 
-    // PROFILE SECTION =========================
-    app.get('/profile', isLoggedIn, function(req, res) {
-        db.collection('christmasList').find({user: req.user}).toArray((err, result) => {
-          if (err) return console.log(err)
+    app.get('/profile', isLoggedIn, (req, res) => {
+
+      db.collection('christmasList').find({ user: req.user }).toArray((err, result) => {
+          if (err) {
+              console.log('Database error:', err);
+              req.flash('error', 'Unable to load your Christmas list. Please try again later.');
+              return res.redirect('/');
+          }
+  
+
           res.render('profile.ejs', {
-            user : req.user,
-            messages: result
-          })
-        })
-    });
+              user: req.user,
+              messages: req.flash('error'), 
+              christmasList: result
+          });
+      });
+  });
 
 
     // LOGOUT ==============================
@@ -27,21 +34,31 @@ module.exports = function(app, passport, db) {
         res.redirect('/');
     });
 
-// Christmas List Item routes ===============================================================
+//Christmas List Routes
 
     app.post('/christmasListItem', (req, res) => {
-      //make sure the user typed in an item, and also insure that the link is an absolute path
-      if(req.body.itemName && req.body.itemLink.includes("http")) {
-        db.collection('christmasList').save({user: req.user, itemName: req.body.itemName, itemLink: req.body.itemLink, purchased: false}, (err, result) => {
-          if (err) return console.log(err)
-          console.log('saved to database')
-          res.redirect('/profile')
-        })
-      }else {
-        res.redirect('/profile')
-        //try to flash an error message too
+
+      if (!req.body.itemName || !req.body.itemLink.startsWith("http")) {
+          req.flash('error', 'Submission failed - please submit an item name and a valid external link');
+          return res.redirect('/profile'); 
       }
-    })
+  
+      db.collection('christmasList').insertOne({
+          user: req.user,
+          itemName: req.body.itemName,
+          itemLink: req.body.itemLink,
+          purchased: false
+      }, (err, result) => {
+          if (err) {
+              console.log('Database error:', err);
+              req.flash('error', 'An error occurred while saving the item.');
+              return res.redirect('/profile'); 
+          }
+  
+          console.log('Saved to database');
+          res.redirect('/profile'); 
+      });
+  });
 
     app.put('/markPurchased', (req, res) => {
       db.collection('christmasList')
